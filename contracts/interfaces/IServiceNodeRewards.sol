@@ -103,6 +103,12 @@ interface IServiceNodeRewards {
 
     function claimRewards(uint256 amount) external;
 
+    function updateAndClaimTokens(
+        uint256 recipientRewards,
+        BLSSignatureParams calldata blsSignature,
+        uint64[] memory ids
+    ) external;
+
     function addBLSPublicKey(
         BN256G1.G1Point memory blsPubkey,
         BLSSignatureParams memory blsSignature,

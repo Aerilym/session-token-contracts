@@ -262,7 +262,7 @@ contract ServiceNodeRewards is Initializable, Ownable2StepUpgradeable, PausableU
         uint256 recipientRewards,
         BLSSignatureParams calldata blsSignature,
         uint64[] memory ids
-    ) external whenNotPaused whenStarted hasEnoughSigners(ids.length) {
+    ) public whenNotPaused whenStarted hasEnoughSigners(ids.length) {
         if (recipientAddress == address(0)) {
             revert NullAddress();
         }
@@ -324,6 +324,25 @@ contract ServiceNodeRewards is Initializable, Ownable2StepUpgradeable, PausableU
     /// @param amount The amount of rewards to claim.
     function claimRewards(uint256 amount) public {
         _claimRewards(msg.sender, amount);
+    }
+
+    /// @notice Updates the token balance for the active wallet and claims the tokes to the wallet.
+    /// Calling this requires a BLS signature from the network.
+    /// @param recipientRewards Amount of rewards the recipient is allowed to
+    /// claim.
+    /// @param blsSignature 128 byte BLS proof of possession signature, signed
+    /// over the tag, `recipientAddress` and `recipientRewards`.
+    /// @param ids Array of service node IDs that didn't sign the signature
+    function updateAndClaimTokens(
+        uint256 recipientRewards,
+        BLSSignatureParams calldata blsSignature,
+        uint64[] memory ids
+    ) external whenNotPaused whenStarted hasEnoughSigners(ids.length) {
+        uint256 claimedRewards = recipients[msg.sender].claimed;
+        uint256 totalRewards = recipients[msg.sender].rewards;
+        uint256 amountToRedeem = totalRewards - claimedRewards;
+        updateRewardsBalance(msg.sender, recipientRewards, blsSignature, ids);
+        _claimRewards(msg.sender, amountToRedeem);
     }
 
     /// MANAGING BLS PUBLIC KEY LIST
